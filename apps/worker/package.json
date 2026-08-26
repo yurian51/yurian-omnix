@@ -7,5 +7,10 @@
     "dev": "tsc -w -p tsconfig.json",
     "lint": "tsc --noEmit -p tsconfig.json",
     "test": "node --test"
+  },
+  "dependencies": {
+    "@omnix/database": "workspace:*",
+    "@omnix/queue": "workspace:*",
+    "bullmq": "^5.58.5"
   }
 }
