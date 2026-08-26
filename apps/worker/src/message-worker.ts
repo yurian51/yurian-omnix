@@ -1,6 +1,7 @@
 import type { Job } from "bullmq";
 import type { IncomingMessageJob } from "@omnix/queue";
 import { createDatabase, MessageRepository } from "@omnix/database";
+import { dispatchAIRequest } from "@omnix/queue";
 
 const db = createDatabase();
 const messages = new MessageRepository(db);
@@ -17,6 +18,14 @@ export async function processIncomingMessage(job: Job<IncomingMessageJob>) {
     content: input.text,
     raw: input.raw,
   });
+
+  if (process.env.REDIS_URL) {
+    await dispatchAIRequest(process.env.REDIS_URL, {
+      tenantId: input.tenantId,
+      conversationId: result.conversation.id,
+      messageId: result.message.id,
+    });
+  }
 
   return {
     messageId: result.message.id,
