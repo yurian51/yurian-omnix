@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import type { MessageType } from "@prisma/client";
 
 export class MessageRepository {
   constructor(private readonly db: PrismaClient) {}
@@ -9,7 +10,7 @@ export class MessageRepository {
     externalMessageId: string;
     from: string;
     timestamp: Date;
-    type: any;
+    type: MessageType;
     content?: string;
     raw: Record<string, unknown>;
   }) {
@@ -20,7 +21,12 @@ export class MessageRepository {
     });
 
     const conversation = await this.db.conversation.findFirst({
-      where: { tenantId: input.tenantId, contactId: contact.id, whatsappPhoneId: input.phoneNumberId, status: { not: "CLOSED" } },
+      where: {
+        tenantId: input.tenantId,
+        contactId: contact.id,
+        whatsappPhoneId: input.phoneNumberId,
+        status: { not: "CLOSED" },
+      },
       orderBy: { updatedAt: "desc" },
     });
 
@@ -36,7 +42,12 @@ export class MessageRepository {
     });
 
     const message = await this.db.message.upsert({
-      where: { tenantId_whatsappMessageId: { tenantId: input.tenantId, whatsappMessageId: input.externalMessageId } },
+      where: {
+        tenantId_whatsappMessageId: {
+          tenantId: input.tenantId,
+          whatsappMessageId: input.externalMessageId,
+        },
+      },
       create: {
         tenantId: input.tenantId,
         conversationId: activeConversation.id,
@@ -53,7 +64,11 @@ export class MessageRepository {
       update: {},
     });
 
-    await this.db.conversation.update({ where: { id: activeConversation.id }, data: { lastMessageAt: input.timestamp, updatedAt: new Date() } });
+    await this.db.conversation.update({
+      where: { id: activeConversation.id },
+      data: { lastMessageAt: input.timestamp },
+    });
+
     return { contact, conversation: activeConversation, message };
   }
 }
