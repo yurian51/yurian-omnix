@@ -1,0 +1,715 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [pgcrypto, vector]
+}
+
+enum TenantStatus { ACTIVE SUSPENDED DELETED }
+enum UserStatus { ACTIVE INVITED SUSPENDED DISABLED }
+enum ConversationStatus { OPEN PENDING ASSIGNED WAITING_CUSTOMER RESOLVED CLOSED }
+enum ConversationMode { AI HUMAN HYBRID }
+enum MessageDirection { INBOUND OUTBOUND }
+enum MessageSenderType { CUSTOMER AI AGENT SYSTEM }
+enum MessageType { TEXT IMAGE VIDEO AUDIO DOCUMENT LOCATION CONTACT STICKER BUTTON LIST TEMPLATE FLOW REACTION SYSTEM INTERACTIVE }
+enum MessageStatus { PENDING SENT DELIVERED READ FAILED }
+enum ContactLifecycle { LEAD PROSPECT QUALIFIED CUSTOMER REPEAT_CUSTOMER VIP INACTIVE }
+enum AgentStatus { ONLINE AWAY OFFLINE }
+enum TicketStatus { OPEN PENDING ASSIGNED ESCALATED RESOLVED CLOSED }
+enum TicketPriority { LOW NORMAL HIGH URGENT }
+enum OrderStatus { DRAFT PENDING_PAYMENT PAID PROCESSING READY SHIPPED DELIVERED CANCELLED REFUNDED }
+enum PaymentStatus { PENDING SUCCESS FAILED REFUNDED }
+enum CampaignStatus { DRAFT SCHEDULED RUNNING COMPLETED PAUSED CANCELLED FAILED }
+enum AutomationStatus { DRAFT ACTIVE PAUSED ARCHIVED }
+enum AutomationExecutionStatus { PENDING RUNNING COMPLETED FAILED CANCELLED }
+enum WhatsAppStatus { CONNECTING CONNECTED DISCONNECTED ERROR }
+
+enum RoleName { PLATFORM_OWNER PLATFORM_ADMIN TENANT_OWNER TENANT_ADMIN MANAGER SUPERVISOR AGENT SALES_AGENT SUPPORT_AGENT FINANCE_AGENT ANALYST VIEWER }
+
+enum PermissionAction { READ CREATE UPDATE DELETE EXECUTE MANAGE }
+
+model Tenant {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  slug String @unique
+  legalName String?
+  email String?
+  phone String?
+  country String @default("TZ")
+  timezone String @default("Africa/Dar_es_Salaam")
+  currency String @default("TZS")
+  logoUrl String?
+  status TenantStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users User[]
+  whatsappAccounts WhatsAppAccount[]
+  contacts Contact[]
+  conversations Conversation[]
+  agents Agent[]
+  teams Team[]
+  products Product[]
+  carts Cart[]
+  orders Order[]
+  payments Payment[]
+  tickets Ticket[]
+  groups Group[]
+  campaigns Campaign[]
+  automations Automation[]
+  knowledgeBases KnowledgeBase[]
+  aiAgents AIAgent[]
+  webhookEvents WebhookEvent[]
+  auditLogs AuditLog[]
+  tags Tag[]
+  createdAtIndexes Int @default(0)
+  @@index([status])
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String? @db.Uuid
+  name String
+  email String @unique
+  phone String?
+  passwordHash String
+  avatarUrl String?
+  status UserStatus @default(INVITED)
+  lastLoginAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  roles UserRole[]
+  agent Agent?
+  auditLogs AuditLog[]
+  @@index([tenantId])
+}
+
+model Role {
+  id String @id @default(uuid()) @db.Uuid
+  name RoleName @unique
+  description String?
+  users UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id String @id @default(uuid()) @db.Uuid
+  resource String
+  action PermissionAction
+  roles RolePermission[]
+  @@unique([resource, action])
+}
+
+model UserRole {
+  userId String @db.Uuid
+  roleId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId String @db.Uuid
+  permissionId String @db.Uuid
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+}
+
+model WhatsAppAccount {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  wabaId String @unique
+  businessId String?
+  displayName String?
+  status WhatsAppStatus @default(CONNECTING)
+  accessTokenEncrypted String?
+  tokenExpiresAt DateTime?
+  webhookVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  phones WhatsAppPhone[]
+  templates WhatsAppTemplate[]
+  flows WhatsAppFlow[]
+  @@index([tenantId])
+}
+
+model WhatsAppPhone {
+  id String @id @default(uuid()) @db.Uuid
+  whatsappAccountId String @db.Uuid
+  phoneNumberId String @unique
+  phoneNumber String
+  displayName String?
+  qualityRating String?
+  messagingLimit String?
+  status WhatsAppStatus @default(CONNECTING)
+  verified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account WhatsAppAccount @relation(fields: [whatsappAccountId], references: [id], onDelete: Cascade)
+  capabilities WhatsAppCapability[]
+  conversations Conversation[]
+  groups Group[]
+  @@index([whatsappAccountId])
+}
+
+model WhatsAppCapability {
+  id String @id @default(uuid()) @db.Uuid
+  whatsappPhoneId String @db.Uuid
+  capability String
+  enabled Boolean @default(false)
+  metadata Json?
+  checkedAt DateTime @default(now())
+  phone WhatsAppPhone @relation(fields: [whatsappPhoneId], references: [id], onDelete: Cascade)
+  @@unique([whatsappPhoneId, capability])
+}
+
+model WhatsAppTemplate {
+  id String @id @default(uuid()) @db.Uuid
+  whatsappAccountId String @db.Uuid
+  name String
+  language String
+  category String
+  status String
+  externalId String?
+  content Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account WhatsAppAccount @relation(fields: [whatsappAccountId], references: [id], onDelete: Cascade)
+  @@index([whatsappAccountId])
+}
+
+model WhatsAppFlow {
+  id String @id @default(uuid()) @db.Uuid
+  whatsappAccountId String @db.Uuid
+  name String
+  externalId String?
+  status String
+  definition Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account WhatsAppAccount @relation(fields: [whatsappAccountId], references: [id], onDelete: Cascade)
+}
+
+model Contact {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  phone String
+  name String?
+  email String?
+  language String @default("sw")
+  country String?
+  avatarUrl String?
+  lifecycle ContactLifecycle @default(LEAD)
+  leadScore Int @default(0)
+  totalOrders Int @default(0)
+  totalSpent Decimal @default(0) @db.Decimal(18,2)
+  lastInteractionAt DateTime?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  orders Order[]
+  carts Cart[]
+  tickets Ticket[]
+  memories AIMemory[]
+  tags ContactTag[]
+  groupParticipants GroupParticipant[]
+  campaignAudiences CampaignAudience[]
+  @@unique([tenantId, phone])
+  @@index([tenantId, lifecycle])
+}
+
+model Conversation {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  contactId String @db.Uuid
+  whatsappPhoneId String @db.Uuid
+  status ConversationStatus @default(OPEN)
+  mode ConversationMode @default(AI)
+  assignedAgentId String? @db.Uuid
+  assignedTeamId String? @db.Uuid
+  priority Int @default(0)
+  lastMessageAt DateTime?
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  whatsappPhone WhatsAppPhone @relation(fields: [whatsappPhoneId], references: [id])
+  assignedAgent Agent? @relation(fields: [assignedAgentId], references: [id])
+  assignedTeam Team? @relation(fields: [assignedTeamId], references: [id])
+  messages Message[]
+  tickets Ticket[]
+  aiMemories AIMemory[]
+  botSessions BotSession[]
+  automationExecutions AutomationExecution[]
+  @@index([tenantId, status, lastMessageAt])
+}
+
+model Message {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  conversationId String @db.Uuid
+  whatsappMessageId String?
+  direction MessageDirection
+  senderType MessageSenderType
+  senderId String?
+  messageType MessageType
+  content String?
+  mediaUrl String?
+  replyToId String? @db.Uuid
+  status MessageStatus @default(PENDING)
+  metadata Json?
+  createdAt DateTime @default(now())
+  processedAt DateTime?
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replyTo Message? @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies Message[] @relation("MessageReplies")
+  @@unique([tenantId, whatsappMessageId])
+  @@index([conversationId, createdAt])
+}
+
+model Agent {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  userId String @unique @db.Uuid
+  status AgentStatus @default(OFFLINE)
+  availability Boolean @default(false)
+  maxConversations Int @default(10)
+  lastActiveAt DateTime?
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teams TeamAgent[]
+  conversations Conversation[]
+  tickets Ticket[]
+  @@index([tenantId, status, availability])
+}
+
+model Team {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  name String
+  description String?
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  agents TeamAgent[]
+  conversations Conversation[]
+  tickets Ticket[]
+  @@unique([tenantId, name])
+}
+
+model TeamAgent {
+  teamId String @db.Uuid
+  agentId String @db.Uuid
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  @@id([teamId, agentId])
+}
+
+model Ticket {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  contactId String @db.Uuid
+  conversationId String? @db.Uuid
+  assignedAgentId String? @db.Uuid
+  teamId String? @db.Uuid
+  subject String
+  description String
+  category String
+  priority TicketPriority @default(NORMAL)
+  status TicketStatus @default(OPEN)
+  slaDueAt DateTime?
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id])
+  assignedAgent Agent? @relation(fields: [assignedAgentId], references: [id])
+  team Team? @relation(fields: [teamId], references: [id])
+  @@index([tenantId, status, priority])
+}
+
+model AIAgent {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  name String
+  description String?
+  systemPrompt String
+  model String
+  temperature Float @default(0.2)
+  maxTokens Int @default(2048)
+  type String @default("GENERAL")
+  status Boolean @default(true)
+  configuration Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  @@index([tenantId, type])
+}
+
+model AIMemory {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  contactId String @db.Uuid
+  conversationId String? @db.Uuid
+  type String
+  content String
+  importance Float @default(0.5)
+  embedding Unsupported("vector(1536)")?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id])
+  @@index([tenantId, contactId])
+}
+
+model KnowledgeBase {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  name String
+  description String?
+  createdAt DateTime @default(now())
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documents KnowledgeDocument[]
+}
+
+model KnowledgeDocument {
+  id String @id @default(uuid()) @db.Uuid
+  knowledgeBaseId String @db.Uuid
+  title String
+  sourceType String
+  sourceUrl String?
+  fileUrl String?
+  content String?
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  chunks KnowledgeChunk[]
+}
+
+model KnowledgeChunk {
+  id String @id @default(uuid()) @db.Uuid
+  documentId String @db.Uuid
+  content String
+  embedding Unsupported("vector(1536)")?
+  metadata Json?
+  createdAt DateTime @default(now())
+  document KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model BotFlow {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  name String
+  description String?
+  status String @default("DRAFT")
+  version Int @default(1)
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  nodes BotNode[]
+  edges BotEdge[]
+  sessions BotSession[]
+}
+
+model BotNode {
+  id String @id @default(uuid()) @db.Uuid
+  flowId String @db.Uuid
+  type String
+  name String
+  content String?
+  positionX Float @default(0)
+  positionY Float @default(0)
+  configuration Json?
+  createdAt DateTime @default(now())
+  flow BotFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  sourceEdges BotEdge[] @relation("SourceNode")
+  targetEdges BotEdge[] @relation("TargetNode")
+}
+
+model BotEdge {
+  id String @id @default(uuid()) @db.Uuid
+  flowId String @db.Uuid
+  sourceNodeId String @db.Uuid
+  targetNodeId String @db.Uuid
+  condition Json?
+  priority Int @default(0)
+  flow BotFlow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  sourceNode BotNode @relation("SourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  targetNode BotNode @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade)
+  @@index([flowId, priority])
+}
+
+model BotSession {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  contactId String @db.Uuid
+  conversationId String @db.Uuid
+  flowId String @db.Uuid
+  currentNodeId String? @db.Uuid
+  variables Json @default("{}")
+  status String @default("ACTIVE")
+  startedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  flow BotFlow @relation(fields: [flowId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  @@index([tenantId, contactId, status])
+}
+
+model Product {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  name String
+  description String?
+  sku String?
+  categoryId String? @db.Uuid
+  status String @default("ACTIVE")
+  currency String @default("TZS")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  variants ProductVariant[]
+  orderItems OrderItem[]
+  @@index([tenantId, status])
+}
+
+model ProductVariant {
+  id String @id @default(uuid()) @db.Uuid
+  productId String @db.Uuid
+  sku String
+  name String
+  price Decimal @db.Decimal(18,2)
+  stockQuantity Int @default(0)
+  metadata Json?
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+  orderItems OrderItem[]
+  @@unique([productId, sku])
+}
+
+model Cart {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  contactId String @db.Uuid
+  status String @default("ACTIVE")
+  currency String @default("TZS")
+  subtotal Decimal @default(0) @db.Decimal(18,2)
+  total Decimal @default(0) @db.Decimal(18,2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  items CartItem[]
+}
+
+model CartItem {
+  id String @id @default(uuid()) @db.Uuid
+  cartId String @db.Uuid
+  productVariantId String @db.Uuid
+  quantity Int
+  unitPrice Decimal @db.Decimal(18,2)
+  total Decimal @db.Decimal(18,2)
+  cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
+}
+
+model Order {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  contactId String @db.Uuid
+  orderNumber String
+  status OrderStatus @default(DRAFT)
+  currency String @default("TZS")
+  subtotal Decimal @default(0) @db.Decimal(18,2)
+  discount Decimal @default(0) @db.Decimal(18,2)
+  tax Decimal @default(0) @db.Decimal(18,2)
+  shipping Decimal @default(0) @db.Decimal(18,2)
+  total Decimal @default(0) @db.Decimal(18,2)
+  notes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  items OrderItem[]
+  payments Payment[]
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId, status, createdAt])
+}
+
+model OrderItem {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  productId String @db.Uuid
+  productVariantId String @db.Uuid
+  quantity Int
+  unitPrice Decimal @db.Decimal(18,2)
+  total Decimal @db.Decimal(18,2)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
+}
+
+model Payment {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  orderId String @db.Uuid
+  provider String
+  providerReference String?
+  amount Decimal @db.Decimal(18,2)
+  currency String @default("TZS")
+  status PaymentStatus @default(PENDING)
+  metadata Json?
+  paidAt DateTime?
+  createdAt DateTime @default(now())
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  @@index([tenantId, status, createdAt])
+  @@index([provider, providerReference])
+}
+
+model Group {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  whatsappPhoneId String @db.Uuid
+  whatsappGroupId String @unique
+  name String
+  description String?
+  inviteUrl String?
+  status String @default("ACTIVE")
+  capabilities Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  whatsappPhone WhatsAppPhone @relation(fields: [whatsappPhoneId], references: [id])
+  participants GroupParticipant[]
+  @@index([tenantId, status])
+}
+
+model GroupParticipant {
+  id String @id @default(uuid()) @db.Uuid
+  groupId String @db.Uuid
+  contactId String? @db.Uuid
+  whatsappParticipantId String
+  role String @default("MEMBER")
+  status String @default("ACTIVE")
+  joinedAt DateTime?
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id])
+  @@unique([groupId, whatsappParticipantId])
+}
+
+model Campaign {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  name String
+  type String
+  status CampaignStatus @default(DRAFT)
+  templateId String?
+  scheduledAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  audiences CampaignAudience[]
+}
+
+model CampaignAudience {
+  id String @id @default(uuid()) @db.Uuid
+  campaignId String @db.Uuid
+  contactId String @db.Uuid
+  status String @default("PENDING")
+  sentAt DateTime?
+  deliveredAt DateTime?
+  readAt DateTime?
+  repliedAt DateTime?
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  @@unique([campaignId, contactId])
+}
+
+model Automation {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  name String
+  triggerType String
+  status AutomationStatus @default(DRAFT)
+  configuration Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  executions AutomationExecution[]
+}
+
+model AutomationExecution {
+  id String @id @default(uuid()) @db.Uuid
+  automationId String @db.Uuid
+  contactId String?
+  conversationId String?
+  status AutomationExecutionStatus @default(PENDING)
+  context Json?
+  startedAt DateTime?
+  completedAt DateTime?
+  error String?
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id])
+  @@index([automationId, status])
+}
+
+model WebhookEvent {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String? @db.Uuid
+  provider String
+  externalEventId String
+  eventType String
+  payload Json
+  status String @default("PENDING")
+  attempts Int @default(0)
+  processedAt DateTime?
+  error String?
+  createdAt DateTime @default(now())
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  @@unique([provider, externalEventId])
+  @@index([status, createdAt])
+}
+
+model Tag {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @db.Uuid
+  name String
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contacts ContactTag[]
+  @@unique([tenantId, name])
+}
+
+model ContactTag {
+  contactId String @db.Uuid
+  tagId String @db.Uuid
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([contactId, tagId])
+}
+
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String? @db.Uuid
+  actorType String
+  actorId String? @db.Uuid
+  action String
+  resourceType String
+  resourceId String?
+  before Json?
+  after Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id])
+  @@index([tenantId, createdAt])
+  @@index([resourceType, resourceId])
+}
