@@ -1,18 +1,22 @@
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
 import { QUEUES, type AIRequestJob, type IncomingMessageJob, type OutgoingMessageJob, type WebhookProcessingJob } from "./contracts";
+import { DEFAULT_QUEUE_OPTIONS } from "./queue-options";
 
 export * from "./contracts";
+export * from "./queue-options";
 
 export function createRedisConnection(url: string): IORedis {
   return new IORedis(url, { maxRetriesPerRequest: null });
 }
 
+const options = { defaultJobOptions: DEFAULT_QUEUE_OPTIONS };
+
 export function createQueues(connection: IORedis) {
   return {
-    webhook: new Queue<WebhookProcessingJob>(QUEUES.webhook, { connection }),
-    incomingMessages: new Queue<IncomingMessageJob>(QUEUES.incomingMessages, { connection }),
-    outgoingMessages: new Queue<OutgoingMessageJob>(QUEUES.outgoingMessages, { connection }),
-    ai: new Queue<AIRequestJob>(QUEUES.ai, { connection }),
+    webhook: new Queue<WebhookProcessingJob>(QUEUES.webhook, { connection, ...options }),
+    incomingMessages: new Queue<IncomingMessageJob>(QUEUES.incomingMessages, { connection, ...options }),
+    outgoingMessages: new Queue<OutgoingMessageJob>(QUEUES.outgoingMessages, { connection, ...options }),
+    ai: new Queue<AIRequestJob>(QUEUES.ai, { connection, ...options }),
   };
 }
