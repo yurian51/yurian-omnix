@@ -1,10 +1,12 @@
 import type { OmnixInboundMessage } from "./events";
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+type JsonRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): JsonRecord | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as JsonRecord : null;
 }
 
-export function normalizeWhatsAppMessages(payload: Record<string, unknown>): OmnixInboundMessage[] {
+export function normalizeWhatsAppMessages(payload: JsonRecord): OmnixInboundMessage[] {
   const entries = Array.isArray(payload.entry) ? payload.entry : [];
   const result: OmnixInboundMessage[] = [];
 
