@@ -8,12 +8,17 @@ export class CommandParser {
     if (!raw.startsWith("/")) return null;
     const tokens = raw.slice(1).match(/(?:[^\s"]+|"[^"]*")+/g) ?? [];
     if (!tokens.length) return null;
-    const candidates = [tokens.slice(0, 2).join(" ").toLowerCase(), tokens[0].toLowerCase()];
-    const definition = this.definitions.find((item) => item.aliases.some((alias) => candidates.includes(alias.replace(/^\//, "").toLowerCase())) || item.name.toLowerCase() === candidates[0]);
-    if (!definition) return null;
-    const values = tokens.slice(definition.name.includes(".") ? 1 : 1).map((v) => v.replace(/^"|"$/g, ""));
+    const normalized = tokens.map((token) => token.replace(/^"|"$/g, ""));
+    const matches = this.definitions.flatMap((definition) => definition.aliases.map((alias) => ({ definition, alias })));
+    const match = matches.filter(({ alias }) => {
+      const aliasTokens = alias.replace(/^\//, "").trim().split(/\s+/);
+      return aliasTokens.every((value, index) => normalized[index]?.toLowerCase() === value.toLowerCase());
+    }).sort((a, b) => b.alias.length - a.alias.length)[0];
+    if (!match) return null;
+    const consumed = match.alias.replace(/^\//, "").trim().split(/\s+/).length;
+    const values = normalized.slice(consumed);
     const args: Record<string, string> = {};
-    definition.args?.forEach((arg, index) => { if (values[index] !== undefined) args[arg.name] = values[index]; });
-    return { name: definition.name, args, raw };
+    match.definition.args?.forEach((arg, index) => { if (values[index] !== undefined) args[arg.name] = values[index]; });
+    return { name: match.definition.name, args, raw };
   }
 }
