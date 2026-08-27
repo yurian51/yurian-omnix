@@ -7,3 +7,5 @@ export * from "./conversation-resolver";
 export * from "./inbound-idempotency";
 export * from "./message-store";
 export * from "./outbound-queue";
+export * from "./delivery-status";
+export * from "./webhook-correlation";
