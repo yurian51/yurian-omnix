@@ -10,8 +10,10 @@ export type WhatsAppStatusEvent = {
 };
 
 export function normalizeDeliveryStatus(value: unknown): WhatsAppDeliveryStatus | null {
-  if (value === "sent" || value === "delivered" || value === "read" || value === "failed") {
-    return value.toUpperCase() as WhatsAppDeliveryStatus;
+  if (typeof value !== "string") return null;
+  const normalized = value.toUpperCase();
+  if (normalized === "SENT" || normalized === "DELIVERED" || normalized === "READ" || normalized === "FAILED") {
+    return normalized;
   }
   return null;
 }
