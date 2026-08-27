@@ -28,3 +28,5 @@ export * from "./variable-catalog";
 export * from "./expression-policy";
 export * from "./ai-agent";
 export * from "./ai-handoff";
+export * from "./ai-memory";
+export * from "./ai-tool-policy";
