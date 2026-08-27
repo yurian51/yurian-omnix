@@ -1,0 +1,14 @@
+{
+  "name": "@omnix/queue",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bullmq": "^5.58.5",
+    "ioredis": "^5.7.0"
+  }
+}

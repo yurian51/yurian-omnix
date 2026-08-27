@@ -1,0 +1,10 @@
+{
+  "name": "@omnix/ai",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test"
+  }
+}

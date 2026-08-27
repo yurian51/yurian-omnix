@@ -1,0 +1,17 @@
+{
+  "name": "@omnix/database",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "generate": "prisma generate",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.15.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.15.0"
+  }
+}
