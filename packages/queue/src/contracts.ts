@@ -2,6 +2,7 @@ export const QUEUES = {
   webhook: "omnix.webhook.processing",
   incomingMessages: "omnix.whatsapp.incoming",
   outgoingMessages: "omnix.whatsapp.outgoing",
+  messageStatus: "omnix.whatsapp.status",
   ai: "omnix.ai.requests",
 } as const;
 
@@ -28,11 +29,21 @@ export type IncomingMessageJob = {
 
 export type OutgoingMessageJob = {
   tenantId: string;
+  conversationId: string;
   phoneNumberId: string;
   to: string;
   type: "text" | "template" | "interactive" | "media";
   payload: Record<string, unknown>;
   idempotencyKey: string;
+};
+
+export type WhatsAppStatusJob = {
+  tenantId: string;
+  providerMessageId: string;
+  status: string;
+  timestamp?: string;
+  errorCode?: string;
+  errorMessage?: string;
 };
 
 export type AIRequestJob = {
