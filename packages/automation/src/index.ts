@@ -13,3 +13,5 @@ export * from "./event-id";
 export * from "./retry-policy";
 export * from "./execution-ledger";
 export * from "./workflow-api";
+export * from "./workflow-version";
+export * from "./workflow-lifecycle";
