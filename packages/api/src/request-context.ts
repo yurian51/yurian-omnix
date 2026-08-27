@@ -1,0 +1,2 @@
+export type HttpRequestContext = { requestId:string; method:string; path:string; principal:{userId:string;tenantId:string;roles:string[];permissions:string[]}; params:Record<string,string>; query:Record<string,string>; body:unknown };
+export function createRequestContext(input:Omit<HttpRequestContext,"requestId"> & {requestId?:string}):HttpRequestContext { return {...input,requestId:input.requestId??crypto.randomUUID()}; }
