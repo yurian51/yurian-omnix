@@ -1,0 +1,2 @@
+import { prepareRequest } from "../request-pipeline";
+describe("request pipeline",()=>{it("creates request context",()=>{const result=prepareRequest({principal:{userId:"u",tenantId:"t",roles:[],permissions:["orders:write"]},permission:"orders:write"});expect(result).toMatchObject({tenantId:"t",userId:"u"});expect(result.requestId).toEqual(expect.any(String));});it("rejects missing permissions",()=>{expect(()=>prepareRequest({principal:{userId:"u",tenantId:"t",roles:[],permissions:[]},permission:"orders:write"})).toThrow("Missing permission");});});
