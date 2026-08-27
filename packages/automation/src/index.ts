@@ -21,3 +21,5 @@ export * from "./workflow-graph";
 export * from "./workflow-graph-compiler";
 export * from "./node-registry";
 export * from "./node-runtime";
+export * from "./node-config-schema";
+export * from "./node-config-validator";
