@@ -38,3 +38,4 @@ export * from "./ai-tool-audit";
 export * from "./ai-approval-policy";
 export * from "./ai-commerce-adapter";
 export * from "./ai-whatsapp-adapter";
+export * from "./ai-tool-composition";
