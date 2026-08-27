@@ -2,3 +2,8 @@ export * from "./types";
 export * from "./cloud-api.provider";
 export * from "./onboarding";
 export * from "./status";
+export * from "./inbound-gateway";
+export * from "./conversation-resolver";
+export * from "./inbound-idempotency";
+export * from "./message-store";
+export * from "./outbound-queue";
