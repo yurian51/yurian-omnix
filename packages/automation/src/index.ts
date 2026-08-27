@@ -6,3 +6,4 @@ export * from "./workflow-validator";
 export * from "./workflow-store";
 export * from "./scheduler";
 export * from "./execution-engine";
+export * from "./action-dispatcher";
