@@ -15,3 +15,7 @@ export * from "./app";
 export * from "./server";
 export * from "./graceful-shutdown";
 export * from "./route-matcher";
+export * from "./auth";
+export * from "./route-dispatch";
+export * from "./request-context";
+export * from "./http-json";
