@@ -32,3 +32,5 @@ export * from "./ai-memory";
 export * from "./ai-tool-policy";
 export * from "./conversation-context";
 export * from "./ai-context-policy";
+export * from "./ai-tool-gateway";
+export * from "./ai-tool-catalog";
