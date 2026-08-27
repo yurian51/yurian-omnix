@@ -1,0 +1,2 @@
+import { canTransitionOrder, transitionOrderStatus } from "../order-state-machine";
+describe("order state machine",()=>{it("allows valid transitions",()=>{expect(canTransitionOrder("PENDING","CONFIRMED")).toBe(true);expect(transitionOrderStatus("CONFIRMED","FULFILLED")).toBe("FULFILLED");});it("rejects terminal-state mutation",()=>{expect(()=>transitionOrderStatus("FULFILLED","PENDING")).toThrow("Invalid order transition");expect(()=>transitionOrderStatus("CANCELLED","CONFIRMED")).toThrow("Invalid order transition");});});

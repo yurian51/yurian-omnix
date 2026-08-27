@@ -1,0 +1,9 @@
+import type { Customer, CustomerNote, CustomerTag, CustomerTimelineEvent } from "../../crm/src/types";
+import type { Order, Payment, Product, Ticket } from "../../commerce/src/types";
+import type { StoredWhatsAppMessage } from "../../whatsapp/src/message-store";
+
+export interface QueryExecutor { query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[] }> }
+export interface PostgresCustomerRepository { get(tenantId: string, id: string): Promise<Customer | null>; findByPhone(tenantId: string, phone: string): Promise<Customer | null>; save(customer: Customer): Promise<Customer>; update(tenantId: string, id: string, patch: Partial<Customer>): Promise<Customer>; }
+export interface PostgresMessageRepository { create(message: StoredWhatsAppMessage): Promise<StoredWhatsAppMessage>; findByProviderMessageId(tenantId: string, providerMessageId: string): Promise<StoredWhatsAppMessage | null>; updateStatus(tenantId: string, id: string, status: StoredWhatsAppMessage["status"]): Promise<void>; listConversation(tenantId: string, conversationId: string, limit?: number): Promise<StoredWhatsAppMessage[]>; }
+export interface PostgresCommerceRepository { productSearch(tenantId: string, query: string): Promise<Product[]>; orderGet(tenantId: string, id: string): Promise<Order | null>; orderCreate(input: Pick<Order, "tenantId" | "customerId" | "items">): Promise<Order>; paymentGet(tenantId: string, id: string): Promise<Payment | null>; ticketCreate(input: Pick<Ticket, "tenantId" | "customerId" | "title"> & Partial<Pick<Ticket, "priority">>): Promise<Ticket>; }
+export type CRMRepositories = { customers: PostgresCustomerRepository; tags: { add(tag: CustomerTag): Promise<CustomerTag> }; notes: { create(note: CustomerNote): Promise<CustomerNote> }; timeline: { append(event: CustomerTimelineEvent): Promise<CustomerTimelineEvent> } };

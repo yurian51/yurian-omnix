@@ -1,0 +1,2 @@
+import { requirePositiveInteger, requireString, requireItems } from "../validation";
+describe("validation",()=>{it("accepts valid strings",()=>{expect(requireString(" abc ","name")).toBe("abc");});it("rejects non-positive quantities",()=>{expect(()=>requirePositiveInteger(0,"quantity")).toThrow("positive integer");expect(()=>requirePositiveInteger(1.5,"quantity")).toThrow("positive integer");});it("requires non-empty items",()=>{expect(()=>requireItems([])).toThrow("at least one item");});});

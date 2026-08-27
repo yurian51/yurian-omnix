@@ -1,0 +1,2 @@
+import type { IncomingMessage } from "node:http";
+export async function readJsonBody(req:IncomingMessage,maxBytes=1_000_000):Promise<unknown>{let size=0;const chunks:Buffer[]=[];for await(const chunk of req){const b=Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk);size+=b.length;if(size>maxBytes)throw new Error("Request body too large");chunks.push(b);}if(size===0)return undefined;try{return JSON.parse(Buffer.concat(chunks).toString("utf8"));}catch{throw new Error("Invalid JSON body");}}

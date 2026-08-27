@@ -1,0 +1,2 @@
+export type InventoryReservation = { id: string; tenantId: string; orderId: string; productId: string; quantity: number; status: "RESERVED" | "RELEASED" | "CONSUMED"; expiresAt?: string };
+export interface InventoryReservationService { reserve(input: { tenantId: string; orderId: string; productId: string; quantity: number }): Promise<InventoryReservation>; release(tenantId: string, reservationId: string): Promise<void>; consume(tenantId: string, reservationId: string): Promise<void>; }

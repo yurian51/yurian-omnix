@@ -1,0 +1,2 @@
+export type TokenVerifier = (token: string) => Promise<{ userId:string; tenantId:string; roles:string[]; permissions:string[] }>;
+export async function resolveBearerPrincipal(authorization:string|undefined, verify:TokenVerifier){ if(!authorization?.startsWith("Bearer ")) throw new Error("Authentication required"); const token=authorization.slice(7).trim(); if(!token) throw new Error("Authentication required"); return verify(token); }

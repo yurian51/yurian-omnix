@@ -1,0 +1,3 @@
+import { mapApiError } from "../error-mapper";
+import { AuthenticationError, AuthorizationError } from "../auth-errors";
+describe("mapApiError",()=>{it("maps authentication errors",()=>{expect(mapApiError(new AuthenticationError(),"req-1")).toMatchObject({code:"AUTHENTICATION_REQUIRED",requestId:"req-1"});});it("maps authorization errors",()=>{expect(mapApiError(new AuthorizationError(),"req-2")).toMatchObject({code:"FORBIDDEN",requestId:"req-2"});});it("hides unknown internal error details",()=>{expect(mapApiError(new Error("database password leaked"),"req-3")).toMatchObject({code:"INTERNAL_ERROR",message:"Internal server error",requestId:"req-3"});});});

@@ -1,0 +1,2 @@
+import { canTransitionPayment, transitionPaymentStatus } from "../payment-state-machine";
+describe("payment state machine",()=>{it("allows payment lifecycle",()=>{expect(canTransitionPayment("PENDING","PAID")).toBe(true);expect(transitionPaymentStatus("PAID","REFUNDED")).toBe("REFUNDED");});it("rejects invalid lifecycle transitions",()=>{expect(()=>transitionPaymentStatus("REFUNDED","PAID")).toThrow("Invalid payment transition");});});

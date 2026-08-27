@@ -1,0 +1,2 @@
+export type WhatsAppWebhookEvent = { providerMessageId: string; phoneNumberId: string; from: string; to: string; type: string; text?: string; timestamp: string };
+export function validateWhatsAppWebhook(event: unknown): WhatsAppWebhookEvent { const e=event as any; for(const key of ["providerMessageId","phoneNumberId","from","to","type","timestamp"]) if(typeof e?.[key]!=="string"||!e[key].trim()) throw new Error(`${key} is required`); return e as WhatsAppWebhookEvent; }
