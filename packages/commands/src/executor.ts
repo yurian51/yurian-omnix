@@ -1,6 +1,5 @@
-import type { Permission } from "@omnix/auth";
 import { assertPermission } from "@omnix/auth";
-import type { CommandContext, CommandDefinition, ParsedCommand } from "./types";
+import type { CommandContext, ParsedCommand } from "./types";
 import { CommandRegistry } from "./registry";
 
 export type CommandApproval = { approved: boolean };
@@ -11,7 +10,7 @@ export class CommandExecutor {
   async execute(parsed: ParsedCommand, context: CommandContext, approval?: CommandApproval) {
     const command = this.registry.get(parsed.name);
     if (!command) throw new Error("Unknown command");
-    if (command.permission) assertPermission(context as any, command.permission as Permission);
+    if (command.permission) assertPermission({ userId: context.userId, tenantId: context.tenantId, role: context.role, permissions: context.permissions }, command.permission);
     if (command.requiresApproval && !approval?.approved) return { status: "AWAITING_APPROVAL" as const, command: command.name };
     return { status: "EXECUTED" as const, result: await command.execute(parsed.args, context) };
   }
