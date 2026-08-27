@@ -26,3 +26,5 @@ export * from "./node-config-validator";
 export * from "./expression-engine";
 export * from "./variable-catalog";
 export * from "./expression-policy";
+export * from "./ai-agent";
+export * from "./ai-handoff";
