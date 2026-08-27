@@ -1,0 +1,2 @@
+import { writeJson } from "../response";
+describe("writeJson",()=>{it("writes status and JSON headers",()=>{const headers=new Map<string,string>();const res:any={statusCode:0,setHeader:(k:string,v:string)=>headers.set(k,v),end:(body:string)=>{res.body=body}};writeJson(res,{status:201,body:{data:{id:"1"},requestId:"req-1"}} as any);expect(res.statusCode).toBe(201);expect(headers.get("Content-Type")).toContain("application/json");expect(JSON.parse(res.body).requestId).toBe("req-1");});});
