@@ -1,0 +1,2 @@
+import { resolveTenantContext } from "../tenant-context";
+describe("tenant context",()=>{it("rejects cross-tenant requests",()=>{expect(()=>resolveTenantContext({userId:"u1",tenantId:"t1",roles:[],permissions:[]},"t2")).toThrow("Tenant mismatch");});it("preserves authenticated tenant",()=>{expect(resolveTenantContext({userId:"u1",tenantId:"t1",roles:["admin"],permissions:["*"]})).toMatchObject({tenantId:"t1",userId:"u1"});});});
