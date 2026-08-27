@@ -34,3 +34,5 @@ export * from "./conversation-context";
 export * from "./ai-context-policy";
 export * from "./ai-tool-gateway";
 export * from "./ai-tool-catalog";
+export * from "./ai-tool-audit";
+export * from "./ai-approval-policy";
