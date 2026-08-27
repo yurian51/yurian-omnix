@@ -24,3 +24,5 @@ export * from "./node-runtime";
 export * from "./node-config-schema";
 export * from "./node-config-validator";
 export * from "./expression-engine";
+export * from "./variable-catalog";
+export * from "./expression-policy";
