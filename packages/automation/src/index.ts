@@ -8,3 +8,4 @@ export * from "./scheduler";
 export * from "./execution-engine";
 export * from "./action-dispatcher";
 export * from "./events";
+export * from "./event-publisher";
