@@ -15,3 +15,5 @@ export * from "./execution-ledger";
 export * from "./workflow-api";
 export * from "./workflow-version";
 export * from "./workflow-lifecycle";
+export * from "./workflow-operations";
+export * from "./workflow-test";
