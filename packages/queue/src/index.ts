@@ -5,6 +5,10 @@ import { DEFAULT_QUEUE_OPTIONS } from "./queue-options";
 
 export * from "./contracts";
 export * from "./queue-options";
+export * from "./ids";
+export * from "./ai-dispatch";
+export * from "./outgoing-dispatch";
+export * from "./status-dispatch";
 
 export function createRedisConnection(url: string): IORedis {
   return new IORedis(url, { maxRetriesPerRequest: null });
