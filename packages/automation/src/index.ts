@@ -17,3 +17,5 @@ export * from "./workflow-version";
 export * from "./workflow-lifecycle";
 export * from "./workflow-operations";
 export * from "./workflow-test";
+export * from "./workflow-graph";
+export * from "./workflow-graph-compiler";
