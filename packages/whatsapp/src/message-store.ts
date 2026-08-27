@@ -1,0 +1,3 @@
+export type StoredWhatsAppMessage = { id: string; tenantId: string; channelId: string; conversationId: string; providerMessageId?: string; direction: "INBOUND" | "OUTBOUND"; from: string; to: string; type: string; text?: string; status: "RECEIVED" | "QUEUED" | "SENT" | "DELIVERED" | "READ" | "FAILED"; occurredAt: string };
+
+export interface WhatsAppMessageStore { create(message: StoredWhatsAppMessage): Promise<StoredWhatsAppMessage>; get(id: string, tenantId: string): Promise<StoredWhatsAppMessage | null>; listConversation(conversationId: string, tenantId: string, limit?: number): Promise<StoredWhatsAppMessage[]>; updateStatus(id: string, tenantId: string, status: StoredWhatsAppMessage["status"]): Promise<void>; }
