@@ -1,11 +1,12 @@
 import type { Pool } from "pg";
 import type { Customer } from "../../crm/src/types";
-import type { Order, Payment, Product, Ticket } from "../../commerce/src/types";
+import type { Order, OrderItem, Payment, Product, Ticket } from "../../commerce/src/types";
 import type { StoredWhatsAppMessage } from "../../whatsapp/src/message-store";
 import { withTenantTransaction } from "./postgres-client";
 
 const mapCustomer = (r: any): Customer => ({ id: r.id, tenantId: r.tenant_id, name: r.name, phone: r.phone ?? undefined, email: r.email ?? undefined, status: r.status, createdAt: r.created_at, updatedAt: r.updated_at });
 const mapMessage = (r: any): StoredWhatsAppMessage => ({ id: r.id, tenantId: r.tenant_id, channelId: r.channel_id, conversationId: r.conversation_id, providerMessageId: r.provider_message_id ?? undefined, direction: r.direction, from: r.sender, to: r.recipient, type: r.message_type, text: r.body ?? undefined, status: r.status, occurredAt: r.occurred_at });
+const mapProduct = (r: any): Product => ({ id: r.id, tenantId: r.tenant_id, name: r.name, sku: r.sku ?? undefined, price: Number(r.price), currency: r.currency, stock: r.stock, active: r.active });
 
 export function createPostgresRepositories(pool: Pool) {
   return {
@@ -20,16 +21,21 @@ export function createPostgresRepositories(pool: Pool) {
       updateStatus: (tenantId: string, id: string, status: StoredWhatsAppMessage["status"]) => withTenantTransaction(pool, tenantId, async c => { const r = await c.query("UPDATE messages SET status=$3 WHERE tenant_id=$1 AND id=$2", [tenantId, id, status]); if (r.rowCount !== 1) throw new Error("Message not found"); })
     },
     products: {
-      search: (tenantId: string, query: string) => withTenantTransaction(pool, tenantId, async c => { const r = await c.query("SELECT * FROM products WHERE tenant_id=$1 AND active=true AND (name ILIKE $2 OR COALESCE(sku,'') ILIKE $2) ORDER BY name LIMIT 50", [tenantId, `%${query}%`]); return r.rows as Product[]; })
+      search: (tenantId: string, query: string) => withTenantTransaction(pool, tenantId, async c => { const r = await c.query("SELECT * FROM products WHERE tenant_id=$1 AND active=true AND (name ILIKE $2 OR COALESCE(sku,'') ILIKE $2) ORDER BY name LIMIT 50", [tenantId, `%${query}%`]); return r.rows.map(mapProduct); }),
+      get: async (tenantId: string, id: string) => withTenantTransaction(pool, tenantId, async c => { const r = await c.query("SELECT * FROM products WHERE tenant_id=$1 AND id=$2", [tenantId, id]); return r.rows[0] ? mapProduct(r.rows[0]) : null; })
     },
     orders: {
-      get: async (_tenantId: string, _id: string): Promise<Order | null> => null
+      get: async (tenantId: string, id: string): Promise<Order | null> => withTenantTransaction(pool, tenantId, async c => { const order = await c.query("SELECT * FROM orders WHERE tenant_id=$1 AND id=$2", [tenantId, id]); if (!order.rows[0]) return null; const items = await c.query("SELECT product_id, quantity, unit_price FROM order_items WHERE tenant_id=$1 AND order_id=$2", [tenantId, id]); return { id: order.rows[0].id, tenantId, customerId: order.rows[0].customer_id, items: items.rows as OrderItem[], subtotal: Number(order.rows[0].subtotal), total: Number(order.rows[0].total), currency: order.rows[0].currency, status: order.rows[0].status }; }),
+      create: async (input: { tenantId: string; customerId: string; items: { productId: string; quantity: number }[] }): Promise<Order> => withTenantTransaction(pool, input.tenantId, async c => { if (!input.items.length) throw new Error("Order requires at least one item"); const ids = input.items.map(i => i.productId); const products = await c.query("SELECT * FROM products WHERE tenant_id=$1 AND id = ANY($2::uuid[]) AND active=true FOR UPDATE", [input.tenantId, ids]); if (products.rows.length !== ids.length) throw new Error("One or more products unavailable"); const priceById = new Map(products.rows.map(p => [p.id, Number(p.price)])); const items = input.items.map(i => ({ productId: i.productId, quantity: i.quantity, unitPrice: priceById.get(i.productId)! })); if (items.some(i => !Number.isInteger(i.quantity) || i.quantity < 1)) throw new Error("Invalid item quantity"); const subtotal = items.reduce((s, i) => s + i.unitPrice * i.quantity, 0); const currency = products.rows[0].currency; const order = await c.query("INSERT INTO orders(tenant_id,customer_id,subtotal,total,currency,status) VALUES($1,$2,$3,$3,$4,'PENDING') RETURNING *", [input.tenantId, input.customerId, subtotal, currency]); for (const item of items) await c.query("INSERT INTO order_items(tenant_id,order_id,product_id,quantity,unit_price) VALUES($1,$2,$3,$4,$5)", [input.tenantId, order.rows[0].id, item.productId, item.quantity, item.unitPrice]); return { id: order.rows[0].id, tenantId: input.tenantId, customerId: input.customerId, items, subtotal, total: subtotal, currency, status: "PENDING" }; }),
+      update: async (tenantId: string, id: string, patch: Partial<Pick<Order, "status">>) => withTenantTransaction(pool, tenantId, async c => { const r = await c.query("UPDATE orders SET status=COALESCE($3,status), updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING *", [tenantId, id, patch.status ?? null]); if (!r.rows[0]) throw new Error("Order not found"); const items = await c.query("SELECT product_id, quantity, unit_price FROM order_items WHERE tenant_id=$1 AND order_id=$2", [tenantId, id]); return { id, tenantId, customerId: r.rows[0].customer_id, items: items.rows as OrderItem[], subtotal: Number(r.rows[0].subtotal), total: Number(r.rows[0].total), currency: r.rows[0].currency, status: r.rows[0].status }; })
     },
     payments: {
-      get: async (_tenantId: string, _id: string): Promise<Payment | null> => null
+      get: async (tenantId: string, id: string): Promise<Payment | null> => withTenantTransaction(pool, tenantId, async c => { const r = await c.query("SELECT * FROM payments WHERE tenant_id=$1 AND id=$2", [tenantId, id]); if (!r.rows[0]) return null; return { id, tenantId, orderId: r.rows[0].order_id, amount: Number(r.rows[0].amount), currency: r.rows[0].currency, status: r.rows[0].status }; }),
+      getByOrder: async (tenantId: string, orderId: string): Promise<Payment | null> => withTenantTransaction(pool, tenantId, async c => { const r = await c.query("SELECT * FROM payments WHERE tenant_id=$1 AND order_id=$2 ORDER BY created_at DESC LIMIT 1", [tenantId, orderId]); if (!r.rows[0]) return null; return { id: r.rows[0].id, tenantId, orderId, amount: Number(r.rows[0].amount), currency: r.rows[0].currency, status: r.rows[0].status }; })
     },
     tickets: {
-      create: async (_input: { tenantId: string; customerId: string; title: string; priority?: Ticket["priority"] }): Promise<Ticket> => { throw new Error("Ticket repository implementation pending"); }
+      create: async (input: { tenantId: string; customerId: string; title: string; priority?: Ticket["priority"] }): Promise<Ticket> => withTenantTransaction(pool, input.tenantId, async c => { const r = await c.query("INSERT INTO tickets(tenant_id,customer_id,title,priority,status) VALUES($1,$2,$3,$4,'OPEN') RETURNING *", [input.tenantId, input.customerId, input.title, input.priority ?? "NORMAL"]); return { id: r.rows[0].id, tenantId: input.tenantId, customerId: r.rows[0].customer_id, title: r.rows[0].title, priority: r.rows[0].priority, status: r.rows[0].status }; }),
+      assign: async (tenantId: string, id: string, agentId: string): Promise<Ticket> => withTenantTransaction(pool, tenantId, async c => { const r = await c.query("UPDATE tickets SET assigned_agent_id=$3,status='ASSIGNED',updated_at=now() WHERE tenant_id=$1 AND id=$2 RETURNING *", [tenantId, id, agentId]); if (!r.rows[0]) throw new Error("Ticket not found"); return { id, tenantId, customerId: r.rows[0].customer_id, title: r.rows[0].title, priority: r.rows[0].priority, status: r.rows[0].status }; })
     }
   };
 }
