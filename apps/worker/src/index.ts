@@ -2,6 +2,7 @@ import { Worker } from "bullmq";
 import { createRedisConnection, QUEUES } from "@omnix/queue";
 import { processIncomingMessage } from "./message-worker";
 import { processAIRequest } from "./ai-worker";
+import { processOutgoingMessage } from "./outgoing-worker";
 
 const redisUrl = process.env.REDIS_URL;
 
@@ -23,7 +24,17 @@ export const aiWorker = new Worker(
   { connection, concurrency: 5 },
 );
 
-for (const [name, worker] of [["incoming", incomingMessageWorker], ["ai", aiWorker]] as const) {
+export const outgoingMessageWorker = new Worker(
+  QUEUES.outgoingMessages,
+  processOutgoingMessage,
+  { connection, concurrency: 10 },
+);
+
+for (const [name, worker] of [
+  ["incoming", incomingMessageWorker],
+  ["ai", aiWorker],
+  ["outgoing", outgoingMessageWorker],
+] as const) {
   worker.on("failed", (job, error) => {
     console.error(`OMNIX ${name} job failed`, {
       jobId: job?.id,
@@ -32,4 +43,4 @@ for (const [name, worker] of [["incoming", incomingMessageWorker], ["ai", aiWork
   });
 }
 
-console.log("OMNIX workers started: incoming-message, ai");
+console.log("OMNIX workers started: incoming-message, ai, outgoing-message");
