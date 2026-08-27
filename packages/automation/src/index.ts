@@ -9,3 +9,5 @@ export * from "./execution-engine";
 export * from "./action-dispatcher";
 export * from "./events";
 export * from "./event-publisher";
+export * from "./event-id";
+export * from "./retry-policy";
