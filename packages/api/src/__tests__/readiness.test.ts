@@ -1,0 +1,2 @@
+import { checkReadiness } from "../readiness";
+describe("readiness",()=>{it("is ready when all dependencies pass",async()=>{await expect(checkReadiness({db:async()=>{},cache:async()=>{}})).resolves.toMatchObject({ready:true});});it("is not ready when a dependency fails",async()=>{await expect(checkReadiness({db:async()=>{},cache:async()=>{throw new Error("down")}})).resolves.toMatchObject({ready:false,checks:[{name:"db",ok:true},{name:"cache",ok:false,error:"down"}]});});});
