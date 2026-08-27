@@ -5,3 +5,6 @@ export * from "./idempotency";
 export * from "./schema";
 export * from "./postgres-repositories";
 export * from "./sql";
+export * from "./postgres-client";
+export * from "./migration-runner";
+export * from "./tenant-query";
