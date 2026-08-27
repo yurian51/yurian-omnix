@@ -1,0 +1,2 @@
+import { authenticateHeaders } from "../http-auth";
+describe("authenticateHeaders",()=>{it("requires bearer authentication",async()=>{await expect(authenticateHeaders({},async()=>({userId:"u",tenantId:"t",roles:[],permissions:[]}))).rejects.toMatchObject({code:"AUTHENTICATION_REQUIRED"});});it("passes token to verifier",async()=>{const verify=async(token:string)=>({userId:token,tenantId:"t",roles:[],permissions:[]});await expect(authenticateHeaders({authorization:"Bearer abc"},verify)).resolves.toMatchObject({userId:"abc",tenantId:"t"});});});
