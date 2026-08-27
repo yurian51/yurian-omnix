@@ -3,6 +3,7 @@ import { createRedisConnection, QUEUES } from "@omnix/queue";
 import { processIncomingMessage } from "./message-worker";
 import { processAIRequest } from "./ai-worker";
 import { processOutgoingMessage } from "./outgoing-worker";
+import { processWhatsAppStatus } from "./status-worker";
 
 const redisUrl = process.env.REDIS_URL;
 
@@ -30,10 +31,17 @@ export const outgoingMessageWorker = new Worker(
   { connection, concurrency: 10 },
 );
 
+export const messageStatusWorker = new Worker(
+  QUEUES.messageStatus,
+  processWhatsAppStatus,
+  { connection, concurrency: 20 },
+);
+
 for (const [name, worker] of [
   ["incoming", incomingMessageWorker],
   ["ai", aiWorker],
   ["outgoing", outgoingMessageWorker],
+  ["status", messageStatusWorker],
 ] as const) {
   worker.on("failed", (job, error) => {
     console.error(`OMNIX ${name} job failed`, {
@@ -43,4 +51,4 @@ for (const [name, worker] of [
   });
 }
 
-console.log("OMNIX workers started: incoming-message, ai, outgoing-message");
+console.log("OMNIX workers started: incoming-message, ai, outgoing-message, message-status");
