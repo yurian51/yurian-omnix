@@ -1,0 +1,2 @@
+import { parseWebhookEvent } from "../webhook";
+describe("webhook",()=>{it("accepts valid message envelope",()=>{expect(parseWebhookEvent({providerMessageId:"m1",phoneNumberId:"pn1",from:"255700000000",to:"255710000000",type:"text",timestamp:"2026-08-27T16:00:00Z",text:"hello"})).toMatchObject({providerMessageId:"m1",type:"text"});});it("rejects missing provider message id",()=>{expect(()=>parseWebhookEvent({phoneNumberId:"pn1",from:"x",to:"y",type:"text",timestamp:"2026-08-27T16:00:00Z"} as any)).toThrow();});});
