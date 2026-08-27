@@ -19,3 +19,5 @@ export * from "./workflow-operations";
 export * from "./workflow-test";
 export * from "./workflow-graph";
 export * from "./workflow-graph-compiler";
+export * from "./node-registry";
+export * from "./node-runtime";
