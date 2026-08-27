@@ -1,0 +1,2 @@
+import { authenticateHeaders } from "../http-auth";
+describe("HTTP auth edge cases",()=>{it("rejects empty bearer token",async()=>{await expect(authenticateHeaders({authorization:"Bearer   "},async()=>({userId:"u",tenantId:"t",roles:[],permissions:[]}))).rejects.toMatchObject({code:"AUTHENTICATION_REQUIRED"});});it("rejects non-bearer authorization",async()=>{await expect(authenticateHeaders({authorization:"Basic abc"},async()=>({userId:"u",tenantId:"t",roles:[],permissions:[]}))).rejects.toMatchObject({code:"AUTHENTICATION_REQUIRED"});});});
