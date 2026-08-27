@@ -1,0 +1,2 @@
+import { requirePermission } from "../authorization";
+describe("requirePermission",()=>{it("allows explicit permission",()=>{expect(()=>requirePermission(["orders:write"],"orders:write")).not.toThrow();});it("rejects missing permission",()=>{expect(()=>requirePermission(["orders:read"],"orders:write")).toThrow("Missing permission: orders:write");});it("allows wildcard",()=>{expect(()=>requirePermission(["*"],"orders:write")).not.toThrow();});});
