@@ -9,5 +9,6 @@ export * from "./inbox.service";
 export * from "./conversation-actions.service";
 export * from "./conversation-note.service";
 export * from "./agent-reply.service";
+export * from "./ai-conversation.service";
 export * from "./tenant-provisioning.service";
 export * from "./whatsapp-number.service";
