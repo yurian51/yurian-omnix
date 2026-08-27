@@ -6,3 +6,5 @@ export * from "./inventory.service";
 export * from "./payment-intent.service";
 export * from "./support.service";
 export * from "./inbox.service";
+export * from "./conversation-actions.service";
+export * from "./conversation-note.service";
