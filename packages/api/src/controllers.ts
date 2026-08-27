@@ -13,6 +13,6 @@ export function createControllers(services: { customers: CustomerService; produc
     orderCreate: (ctx:ControllerContext,body:unknown) => run(ctx,()=>{const b=body as any;const customerId=requireString(b?.customerId,"customerId");const items=requireItems(b?.items).map((i:any)=>({productId:requireString(i?.productId,"productId"),quantity:requirePositiveInteger(i?.quantity,"quantity")}));return services.orders.create({tenantId:ctx.tenantId,customerId,items});}),
     orderUpdate: (ctx:ControllerContext,id:unknown,body:unknown) => run(ctx,()=>services.orders.update(ctx.tenantId,requireString(id,"id"),{status:(body as any)?.status})),
     paymentGet: (ctx:ControllerContext,id:unknown) => run(ctx,()=>services.payments.get(ctx.tenantId,requireString(id,"id"))),
-    ticketCreate: (ctx:ControllerContext,body:unknown) => run(ctx=>{throw new Error("unreachable")},async()=>null as never)
+    ticketCreate: (ctx:ControllerContext,body:unknown) => run(ctx,()=>{const b=body as any;return services.tickets.create({tenantId:ctx.tenantId,customerId:requireString(b?.customerId,"customerId"),title:requireString(b?.title,"title"),priority:b?.priority});})
   };
 }
