@@ -8,3 +8,4 @@ export * from "./support.service";
 export * from "./inbox.service";
 export * from "./conversation-actions.service";
 export * from "./conversation-note.service";
+export * from "./agent-reply.service";
