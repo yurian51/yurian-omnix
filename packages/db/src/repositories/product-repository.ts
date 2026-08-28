@@ -1,0 +1,2 @@
+import type { Pool } from "pg";
+export function createProductRepository(pool:Pool){return {async search(tenantId:string,query=""){const r=await pool.query("SELECT id,tenant_id,sku,name,price,stock,created_at FROM products WHERE tenant_id=$1 AND (name ILIKE $2 OR sku ILIKE $2) ORDER BY name LIMIT 50",[tenantId,`%${query}%`]);return r.rows;},async get(tenantId:string,id:string){const r=await pool.query("SELECT id,tenant_id,sku,name,price,stock,created_at FROM products WHERE tenant_id=$1 AND id=$2",[tenantId,id]);return r.rows[0]??null;}};}
