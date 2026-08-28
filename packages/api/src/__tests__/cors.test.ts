@@ -1,2 +1,2 @@
-import { isOriginAllowed } from "../cors";
-describe("CORS",()=>{it("allows configured origin",()=>{expect(isOriginAllowed("https://app.example.com",{origins:["https://app.example.com"],methods:[],headers:[]})).toBe(true);});it("rejects unconfigured origin",()=>{expect(isOriginAllowed("https://evil.example.com",{origins:["https://app.example.com"],methods:[],headers:[]})).toBe(false);});});
+import { isOriginAllowed, type CorsPolicy } from "../cors";
+describe("CORS policy",()=>{const policy:CorsPolicy={origins:["https://app.example.com"],methods:["GET"],headers:["Authorization"]};it("allows configured origin",()=>{expect(isOriginAllowed("https://app.example.com",policy)).toBe(true);});it("rejects unconfigured origin",()=>{expect(isOriginAllowed("https://evil.example.com",policy)).toBe(false);});it("rejects missing origin",()=>{expect(isOriginAllowed(undefined,policy)).toBe(false);});});
