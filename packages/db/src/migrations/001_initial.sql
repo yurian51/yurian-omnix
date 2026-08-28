@@ -1,0 +1,11 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE TABLE IF NOT EXISTS tenants (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS users (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, email text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(tenant_id,email));
+CREATE TABLE IF NOT EXISTS customers (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, name text NOT NULL, email text, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS products (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, sku text NOT NULL, name text NOT NULL, price numeric(18,2) NOT NULL CHECK(price >= 0), stock integer NOT NULL DEFAULT 0 CHECK(stock >= 0), created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(tenant_id,sku));
+CREATE TABLE IF NOT EXISTS orders (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, customer_id uuid NOT NULL REFERENCES customers(id), status text NOT NULL DEFAULT 'PENDING', total numeric(18,2) NOT NULL DEFAULT 0 CHECK(total >= 0), created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS order_items (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE, order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE, product_id uuid NOT NULL REFERENCES products(id), quantity integer NOT NULL CHECK(quantity > 0), unit_price numeric(18,2) NOT NULL CHECK(unit_price >= 0));
+CREATE INDEX IF NOT EXISTS idx_customers_tenant ON customers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_products_tenant ON products(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_orders_tenant ON orders(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
