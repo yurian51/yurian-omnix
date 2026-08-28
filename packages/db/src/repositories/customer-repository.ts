@@ -1,0 +1,2 @@
+import type { Pool } from "pg";
+export function createCustomerRepository(pool:Pool){return {async get(tenantId:string,id:string){const r=await pool.query("SELECT id,tenant_id,name,email,created_at FROM customers WHERE tenant_id=$1 AND id=$2",[tenantId,id]);return r.rows[0]??null;},async create(input:{tenantId:string;name:string;email?:string}){const r=await pool.query("INSERT INTO customers(tenant_id,name,email) VALUES($1,$2,$3) RETURNING id,tenant_id,name,email,created_at",[input.tenantId,input.name,input.email??null]);return r.rows[0];}};}
