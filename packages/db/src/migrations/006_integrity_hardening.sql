@@ -1,0 +1,13 @@
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_customer_id_fkey;
+ALTER TABLE orders ADD CONSTRAINT orders_customer_tenant_fk FOREIGN KEY (tenant_id, customer_id) REFERENCES customers(tenant_id, id);
+ALTER TABLE order_items DROP CONSTRAINT IF EXISTS order_items_product_id_fkey;
+ALTER TABLE order_items ADD CONSTRAINT order_items_product_tenant_fk FOREIGN KEY (tenant_id, product_id) REFERENCES products(tenant_id, id);
+ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_order_id_fkey;
+ALTER TABLE payments ADD CONSTRAINT payments_order_tenant_fk FOREIGN KEY (tenant_id, order_id) REFERENCES orders(tenant_id, id);
+ALTER TABLE inventory_reservations DROP CONSTRAINT IF EXISTS inventory_reservations_order_id_fkey;
+ALTER TABLE inventory_reservations ADD CONSTRAINT inventory_reservation_order_tenant_fk FOREIGN KEY (tenant_id, order_id) REFERENCES orders(tenant_id, id);
+ALTER TABLE inventory_reservations DROP CONSTRAINT IF EXISTS inventory_reservations_product_id_fkey;
+ALTER TABLE inventory_reservations ADD CONSTRAINT inventory_reservation_product_tenant_fk FOREIGN KEY (tenant_id, product_id) REFERENCES products(tenant_id, id);
+ALTER TABLE payments ADD CONSTRAINT payments_status_check CHECK(status IN ('PENDING','PAID','FAILED','REFUNDED'));
+ALTER TABLE inventory_reservations ADD CONSTRAINT inventory_reservation_status_check CHECK(status IN ('RESERVED','CONSUMED','RELEASED'));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_tenant_provider_reference ON payments(tenant_id,provider,provider_reference) WHERE provider_reference IS NOT NULL;
