@@ -1,0 +1,3 @@
+import { rolePermissions,type RoleKey } from "./role-catalog";
+export function permissionsForRoles(roles:readonly string[]){const set=new Set<string>();for(const role of roles){const permissions=rolePermissions[role as RoleKey];if(permissions)for(const permission of permissions)set.add(permission);}return [...set];}
+export function evaluatePermission(roles:readonly string[],required:string){const permissions=permissionsForRoles(roles);return {allowed:permissions.includes(required)||permissions.includes("*"),reason:permissions.includes(required)||permissions.includes("*")?"permission-granted":"permission-denied"};}
