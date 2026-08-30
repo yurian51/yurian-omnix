@@ -1,0 +1,2 @@
+import { evaluatePermission,permissionsForRoles } from "../rbac";
+describe("RBAC",()=>{it("expands manager role",()=>{expect(permissionsForRoles(["manager"])).toContain("orders:write");});it("denies viewer writes",()=>{expect(evaluatePermission(["viewer"],"orders:write")).toMatchObject({allowed:false,reason:"permission-denied"});});it("combines multiple roles",()=>{expect(evaluatePermission(["viewer","operator"],"orders:write").allowed).toBe(true);});});
