@@ -1,0 +1,4 @@
+import { PERMISSIONS,type PermissionKey } from "./permission-catalog";
+export const ROLES={admin:"admin",manager:"manager",operator:"operator",viewer:"viewer"} as const;
+export type RoleKey=typeof ROLES[keyof typeof ROLES];
+export const rolePermissions:Readonly<Record<RoleKey,readonly PermissionKey[]>>={admin:Object.values(PERMISSIONS),manager:[PERMISSIONS.customersRead,PERMISSIONS.customersWrite,PERMISSIONS.productsRead,PERMISSIONS.productsWrite,PERMISSIONS.ordersRead,PERMISSIONS.ordersWrite,PERMISSIONS.paymentsRead,PERMISSIONS.inventoryRead,PERMISSIONS.inventoryWrite],operator:[PERMISSIONS.customersRead,PERMISSIONS.productsRead,PERMISSIONS.ordersRead,PERMISSIONS.ordersWrite,PERMISSIONS.inventoryRead],viewer:[PERMISSIONS.customersRead,PERMISSIONS.productsRead,PERMISSIONS.ordersRead,PERMISSIONS.paymentsRead,PERMISSIONS.inventoryRead]};
