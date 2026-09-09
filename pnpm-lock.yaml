@@ -7,6 +7,19 @@ settings:
 importers:
   .:
     dependencies: {}
+  apps/api:
+    dependencies: {}
+  apps/worker:
+    dependencies:
+      '@omnix/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@omnix/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
+      bullmq:
+        specifier: ^5.58.5
+        version: 5.58.5
   packages/database:
     dependencies:
       '@prisma/client':
@@ -24,3 +37,7 @@ importers:
       ioredis:
         specifier: ^5.7.0
         version: 5.7.0
+
+packages: {}
+
+snapshots: {}
