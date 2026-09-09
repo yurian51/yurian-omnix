@@ -70,3 +70,20 @@ Never commit secrets, access tokens, provider credentials or production environm
 ## License
 
 Proprietary. All rights reserved.
+
+
+## Render Deployment
+
+For the current Render service, set the build command to:
+
+```bash
+pnpm install --no-frozen-lockfile && pnpm --filter @omnix/api build
+```
+
+Start command:
+
+```bash
+node apps/api/dist/main.js
+```
+
+Required environment variables are managed in Render and must not be committed.
