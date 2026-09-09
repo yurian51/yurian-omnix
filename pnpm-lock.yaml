@@ -16,3 +16,11 @@ importers:
       prisma:
         specifier: ^6.15.0
         version: 6.15.0
+  packages/queue:
+    dependencies:
+      bullmq:
+        specifier: ^5.58.5
+        version: 5.58.5
+      ioredis:
+        specifier: ^5.7.0
+        version: 5.7.0
