@@ -5,3 +5,8 @@ export * from "./tool-runner";
 export * from "./business-tools";
 export * from "./tool-registry";
 export * from "./orchestrator";
+export * from "./tool-safety";
+export * from "./verification";
+export * from "./approval";
+export * from "./tenant-context";
+export * from "./tool-errors";
