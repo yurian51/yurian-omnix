@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: yurian-ai-os-api
+    runtime: node
+    region: frankfurt
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @omnix/api build
+    startCommand: node apps/api/dist/main.js
