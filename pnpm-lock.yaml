@@ -4,4 +4,15 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-importers: {}
+importers:
+  .:
+    dependencies: {}
+  packages/database:
+    dependencies:
+      '@prisma/client':
+        specifier: ^6.15.0
+        version: 6.15.0(prisma@6.15.0)
+    devDependencies:
+      prisma:
+        specifier: ^6.15.0
+        version: 6.15.0
